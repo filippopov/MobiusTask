@@ -90,6 +90,27 @@ class GenerateTable {
         return $this;
     }
 
+    public function setContentComments($comments)
+    {
+        foreach($comments as $comment){
+            $this->options.="<table id=\"table-{$comment->getId()}\" class='table table-hover'>";
+            $this->options.="<tr>";
+            $this->options.="<td>{$comment->getAuthorName()}</td>>";
+            $this->options.="<td>{$comment->getDateTime()}</td>>";
+            $this->options.="</tr>";
+            $this->options.="<tr>";
+            $this->options.="<td>{$comment->getComment()}</td>>";
+            $this->options.="</tr>";
+            $this->options.="<tr>";
+            $this->options.="<td><a href=\"\" id=\"{$comment->getId()}\">Delete Comment</a></td>>";
+            $this->options.="<td><a href=\"\" id=\"{$comment->getId()}\">Edit Comment</a></td>>";
+            $this->options.="</tr>";
+            $this->options.="</table>";
+        }
+        return $this;
+    }
+
+
     /**
      * @param $v
      * @return $this
@@ -219,13 +240,13 @@ class GenerateTable {
     }
 
     public function render(){
-        $output = "<table";
-        foreach($this->attributes as $key => $value){
-            $output .=" " . $key . "=". '"'.$value. '"';
-        }
-        $output .=">\n";
-        $output .=$this->options;
-        $output .="</table>";
+//        $output = "<table";
+//        foreach($this->attributes as $key => $value){
+//            $output .=" " . $key . "=". '"'.$value. '"';
+//        }
+//        $output .=">\n";
+        $output =$this->options;
+//        $output .="</table>";
 
         echo $output;
     }

@@ -2,17 +2,18 @@
 /**
  * Created by PhpStorm.
  * User: Filip
- * Date: 11/13/2015
- * Time: 5:06 PM
+ * Date: 12/17/2015
+ * Time: 3:33 PM
  */
+
 namespace Mobius\Models;
 
-use Mobius\BindingModels\Users\UserBindingModel;
+
+use Mobius\BindingModels\Comments\CommentsBindingModel;
 use Mobius\Core\Database;
-use Mobius\ViewModels\User;
+use Mobius\ViewModels\CommentViewModel;
 
-class IdentityUser {
-
+class CommentsRepository {
     private $query;
 
     private $where = " WHERE 1 ";
@@ -23,8 +24,9 @@ class IdentityUser {
 
     private static $selectedObjectPool = [];
     private static $insertObjectPool = [];
+
     /**
-     * @var IdentityUser
+     * @var CommentsRepository
      */
     private static $inst = null;
 
@@ -33,7 +35,7 @@ class IdentityUser {
     }
 
     /**
-     * @return IdentityUser
+     * @return CommentsRepository
      */
     public static function create(){
         if(self::$inst == null){
@@ -44,10 +46,20 @@ class IdentityUser {
     }
 
     /**
-     * @param int $id
+     * @param $id
      * @return $this
      */
     public function filterById($id){
+        $this->where .=" AND c.id = ?";
+        $this->placeholders[] = $id;
+        return $this;
+    }
+
+    /**
+     * @param $id
+     * @return $this
+     */
+    public function deleteFilterById($id){
         $this->where .=" AND id = ?";
         $this->placeholders[] = $id;
         return $this;
@@ -57,9 +69,9 @@ class IdentityUser {
      * @param $username
      * @return $this
      */
-    public function filterByUsername($username){
-        $this->where .=" AND username = ?";
-        $this->placeholders[] = $username;
+    public function filterByAuthorId($id){
+        $this->where .=" AND c.user_id = ?";
+        $this->placeholders[] = $id;
         return $this;
     }
 
@@ -67,9 +79,15 @@ class IdentityUser {
      * @param $password
      * @return $this
      */
-    public function filterByPassword($password){
-        $this->where .=" AND password = ?";
-        $this->placeholders[] = $password;
+    public function filterByDateAndTime($dateAndTime){
+        $this->where .=" AND c.date_time = ?";
+        $this->placeholders[] = $dateAndTime;
+        return $this;
+    }
+
+    public function filterByAuthorName($username){
+        $this->where .=" AND u.username = ?";
+        $this->placeholders[] = $username;
         return $this;
     }
 
@@ -105,7 +123,6 @@ class IdentityUser {
         }
 
         $this->order .= " ORDER BY $column DESC";
-
         return $this;
     }
 
@@ -146,51 +163,57 @@ class IdentityUser {
     }
 
     /**
-     * @return User[]
+     * @return CommentViewModel[]
      * @throws \Exception
      */
     public function findAll(){
         $db = Database::getInstance('app');
 
-        $this->query = "SELECT * FROM users" . $this->where . $this->order;
+        $this->query = "SELECT c.id,c.comment_text,c.date_time,u.username,c.user_id FROM comments c JOIN users u ON c.user_id = u.id" . $this->where . $this->order;
         $result = $db->prepare($this->query);
         $result->execute($this->placeholders);
 
-        $users=[];
+        $comments=[];
 
-        foreach($result->fetchAll() as $userInfo){
-            $user = new User(
-                $userInfo['username'],
-                $userInfo['password'],
-                $userInfo['id']
+        foreach($result->fetchAll() as $commentInfo){
+            $comment = new CommentViewModel(
+                $commentInfo['id'],
+                $commentInfo['comment_text'],
+                $commentInfo['date_time'],
+                $commentInfo['username'],
+                $commentInfo['user_id']
             );
 
-            $users[] = $user;
-            self::$selectedObjectPool[] = $user;
+            $comments[] = $comment;
+            self::$selectedObjectPool[] = $comment;
         }
 
-        return $users;
+        return $comments;
     }
 
     /**
-     * @return User
+     * @return CommentViewModel
      * @throws \Exception
      */
     public function findOne(){
         $db = Database::getInstance('app');
 
-        $this->query = "SELECT * FROM users" . $this->where .$this->order ." LIMIT 1";
+        $this->query = "SELECT c.id,c.comment_text,c.date_time,u.username,c.user_id FROM comments c JOIN users u ON c.user_id = u.id" . $this->where .$this->order ." LIMIT 1";
+
         $result = $db->prepare($this->query);
         $result->execute($this->placeholders);
-        $userInfo = $result->fetch();
-        $user = new User(
-            $userInfo['username'],
-            $userInfo['password'],
-            $userInfo['id']);
+        $commentInfo = $result->fetch();
+        $comment = new CommentViewModel(
+            $commentInfo['id'],
+            $commentInfo['comment_text'],
+            $commentInfo['date_time'],
+            $commentInfo['username'],
+            $commentInfo['user_id']
+        );
 
-        self::$selectedObjectPool[] = $user;
+        self::$selectedObjectPool[] = $comment;
 
-        return $user;
+        return $comment;
     }
 
 
@@ -202,7 +225,7 @@ class IdentityUser {
     public function delete(){
         $db = Database::getInstance('app');
 
-        $this->query = "DELETE FROM users" . $this->where;
+        $this->query = "DELETE FROM comments" . $this->where;
         $result = $db->prepare($this->query);
         $result->execute($this->placeholders);
 
@@ -210,47 +233,10 @@ class IdentityUser {
     }
 
     /**
-     * @param UserBindingModel $model
-     * @return mixed
-     * @throws \Exception
+     * @param CommentsBindingModel $model
      */
-    public function login(UserBindingModel $model)
-    {
-        $db = Database::getInstance('app');
-        $this->where .=" AND username = ?";
-        $this->placeholders[] = $model->getUsername();
-        $this->query = "SELECT id, username, password FROM users". $this->where;
-        $result =$db->prepare($this->query);
-        $result->execute($this->placeholders);
-
-        if ($result->rowCount() <= 0) {
-            throw new \Exception('Invalid username');
-        }
-
-        $userRow = $result->fetch();
-
-        if (password_verify($model->getPassword(), $userRow['password'])) {
-            return $userRow['id'];
-        }
-
-        throw new \Exception('Invalid credentials');
-    }
-
-    /**
-     * @param UserBindingModel $user
-     * @throws \Exception
-     */
-    public static function add(UserBindingModel $user){
-        if($user->getId()){
-            throw new \Exception('This entity is not new');
-        }
-
-        if(self::exists($user->getUsername())){
-            throw new \Exception("User already registered");
-        }
-
-        self::$insertObjectPool[] = $user;
-
+    public static function add(CommentsBindingModel $model){
+        self::$insertObjectPool[] = $model;
     }
 
     public static function save()
@@ -267,37 +253,40 @@ class IdentityUser {
     }
 
     /**
-     * @param User $user
+     * @param CommentViewModel $model
      * @throws \Exception
      */
-    private static function update(User $user){
+    private static function update(CommentViewModel $model){
         $db = Database::getInstance('app');
-        $query = "UPDATE users SET username = ?, password = ? WHERE id = ?";
+        $query = "UPDATE commments SET comment_text = ?, date_time = ? WHERE id = ?";
         $result = $db->prepare($query);
         $result->execute(
             [
-            $user->getUsername(),
-            password_hash($user->getPass(), PASSWORD_DEFAULT),
-            $user->getId()
+                $model->getComment(),
+                $model->getDateTime(),
+                $model->getId()
             ]
         );
     }
 
     /**
-     * @param UserBindingModel $user
+     * @param CommentsBindingModel $model
      * @throws \Exception
      */
-    private static function insert(UserBindingModel $user){
+    private static function insert(CommentsBindingModel $model){
 
         $db = Database::getInstance('app');
-        $query = "INSERT INTO users (username, password) VALUES (?, ?)";
+        $query = "INSERT INTO comments (comment_text, user_id, date_time) VALUES (?, ?, ?)";
         $result = $db->prepare($query);
         $result->execute(
             [
-            $user->getUsername(),
-            password_hash($user->getPassword(), PASSWORD_DEFAULT)
+                $model->getComment(),
+                $model->getUserId(),
+                $model->getDateTime()
             ]
         );
+
+
     }
 
     /**
@@ -305,25 +294,11 @@ class IdentityUser {
      * @return bool
      */
     private function isColumnAllowed($column){
-        $refc = new \ReflectionClass('Mobius\BindingModels\Users\UserBindingModel');
+        $refc = new \ReflectionClass('Mobius\BindingModels\Comments\CommentsBindingModel');
         $consts = $refc->getConstants();
 
         return in_array($column, $consts);
     }
 
-    /**
-     * @param $username
-     * @return bool
-     * @throws \Exception
-     */
-    public function exists($username)
-    {
-        $db = Database::getInstance('app');
-
-        $result = $db->prepare("SELECT id FROM users WHERE username = ?");
-        $result->execute([ $username ]);
-
-        return $result->rowCount() > 0;
-    }
 
 } 

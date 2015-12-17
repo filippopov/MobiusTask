@@ -37,7 +37,8 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
-                <li><a href="https://github.com/filippopov/WebDevelopmentBasicsRetake"  target="_blank">GitHub Repository</a></li>
+                <li><a href="http://localhost:8004/MobiusTask/comments/allComments" >All Comments</a></li>
+                <li><a href="https://github.com/filippopov/MobiusTask"  target="_blank">GitHub Repository</a></li>
 
             </ul>
             <ul class="nav navbar-nav navbar-right">
