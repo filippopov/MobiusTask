@@ -29,22 +29,19 @@ $action = array_shift($requestParams);
     \Mobius\Config\DatabaseConfig::DB_HOST
 );
 
-$dateTime = new DateTime();
-$stringTime = $dateTime->format('Y-m-d H:i:s');
-//$com = new \Mobius\BindingModels\Comments\CommentsBindingModel('dffasf',2,$stringTime);
-////var_dump($com);
-//
-//$user = new \Mobius\BindingModels\Users\UserBindingModel('dffsf','12345');
-
-//$result = \Mobius\Models\CommentsRepository::create()->filterById(2)->delete();
-//var_dump($result);
-
-
-//var_dump($comments);
-
+if($controller =="index.php"){
+    $controller = 'users';
+    $action = 'register';
+}
 
 $app = new \Mobius\Application($controller, $action, $requestParams);
 $app->start();
+
+//to register user you must go: http://localhost:(your port)/MobiusTask/users/register
+//to login user you must go: http://localhost:(your port)/MobiusTask/users/login
+//I use port 8004, to work links you must change 8004 to your port.
+//SQL script in repository.
+
 
 
 

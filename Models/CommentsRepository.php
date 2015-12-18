@@ -258,8 +258,9 @@ class CommentsRepository {
      */
     private static function update(CommentViewModel $model){
         $db = Database::getInstance('app');
-        $query = "UPDATE commments SET comment_text = ?, date_time = ? WHERE id = ?";
+        $query = "UPDATE comments SET comment_text = ?, date_time = ? WHERE id = ?";
         $result = $db->prepare($query);
+
         $result->execute(
             [
                 $model->getComment(),
@@ -277,6 +278,7 @@ class CommentsRepository {
 
         $db = Database::getInstance('app');
         $query = "INSERT INTO comments (comment_text, user_id, date_time) VALUES (?, ?, ?)";
+
         $result = $db->prepare($query);
         $result->execute(
             [

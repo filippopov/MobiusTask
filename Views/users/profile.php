@@ -71,6 +71,7 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <h1>Hello, <?= $model->getUsername(); ?></h1>
+                <div>Go to All Comments to add, delete or edit your comments</div>
             </div>
         </div>
     </div>

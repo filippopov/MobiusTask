@@ -36,7 +36,7 @@ class UsersController extends Controller
         $model = new UserBindingModel($user,$pass);
         $userId = IdentityUser::create()->login($model);
         $_SESSION['id'] = $userId;
-        header("Location: profile");
+        header("Location: http://localhost:8004/MobiusTask/users/profile");
     }
 
     public function register()

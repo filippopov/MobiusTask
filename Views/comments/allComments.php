@@ -18,7 +18,7 @@
             <br/>
             <div class="table-responsive">
             <?php foreach($model as $comment ):?>
-                <table class="table table-hover" style="border: 1px solid black">
+                <table class="table table-hover" style="border: 1px solid black"id="table-<?=$comment->getId();?>">
                     <tr>
                         <td>Author: <?=$comment->getAuthorName();?></td>
                         <td><?=$comment->getDateTime();?></td>
@@ -30,8 +30,8 @@
                     </tr>
                     <tr>
                         <?php if($_SESSION['id']==$comment->getUserId()):?>
-                            <td><a href="" id="" class="confirm btn btn-danger">Delete Comment</a></td>
-                            <td><a href="" id="" class="btn btn-info">Edit Comment</a></td>
+                            <td><a href="" class="confirm btn btn-danger" id="<?=$comment->getId();?>">Delete Comment</a></td>
+                            <td><a href="http://localhost:8004/MobiusTask/comments/editcomment/<?=$comment->getId();?>" class="btn btn-info">Edit Comment</a></td>
                         <?php elseif($_SESSION['id']!=$comment->getUserId()): ?>
                             <td colspan="2">You can't delete or edit foreign comment</td>
                         <?php endif; ?>
@@ -46,8 +46,15 @@
     $(".confirm").confirm({
         text: "Are you sure you want to delete that comment?",
         title: "Confirmation required",
-        confirm: function(button) {
 
+        confirm: function(button) {
+            var id = $(button).attr('id');
+            $.ajax({
+                url:'http://localhost:8004/MobiusTask/comments/deletecomment/'+id,
+                method:"POST"
+            }).always(function() {
+                $('#table-'+id).remove();
+            });
         },
         cancel: function(button) {
             // nothing to do
